@@ -1,3 +1,17 @@
-*.pt
-/output
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# Local IDE settings
 .idea/
+
+# Stage outputs
+/translate/
+/models/
+/generation/
+/output_dots/
+/analysis/
+
+# Legacy model artifacts
+*.pt

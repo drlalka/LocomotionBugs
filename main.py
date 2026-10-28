@@ -1,35 +1,31 @@
-"""Run the point -> joint-velocity -> learned motion -> point pipeline."""
+"""Run the requested pipeline stage and all following stages."""
 
 import argparse
 
+import config
 import dots_to_rotato
 import Learn
-import generation
+import generate_motion
+import rotato_to_dots
 
 
-# 0: extract training features, train, generate
-# 1: train, generate
-# 2: generate only (requires rotato_gru.pt)
-STAGE = 0
-
-
-def run(stage=STAGE, seed_rows=100):
-    if stage not in (0, 1, 2):
-        raise ValueError("stage must be 0, 1, or 2")
+def run(stage=config.DEFAULT_STAGE):
+    if stage not in (0, 1, 2, 3):
+        stage = -1
     if stage <= 0:
-        print("\n[stage 0/2] Extracting joint angular velocities")
+        print("\n[stage 0] translating dots into body and joint angular velocities")
         dots_to_rotato.main()
     if stage <= 1:
-        print("\n[stage 1/2] Training one joint-velocity model")
+        print("\n[stage 1] training body and legs models")
         Learn.main()
-    print("\n[stage 2/2] Generating angular velocities and reconstructing points")
-    generation.main(seed_rows)
+    if stage <= 2:
+        print("\n[stage 2] generating velocity sequences")
+        generate_motion.main()
+    print("\n[stage 3] rebuilding points from generated velocities")
+    rotato_to_dots.main()
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--stage", type=int, choices=(0, 1, 2), default=STAGE)
-    parser.add_argument("--seed-rows", type=int, default=100,
-                        help="number of initial source rows used to seed generation")
-    args = parser.parse_args()
-    run(args.stage, args.seed_rows)
+    parser.add_argument("--stage", type=int, choices=(0, 1, 2, 3), default=config.DEFAULT_STAGE)
+    run(parser.parse_args().stage)
